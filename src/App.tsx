@@ -1,45 +1,31 @@
-import { useState } from 'react'
-import logo from './logo.svg'
-import './App.css'
+import { lazy, Suspense } from "react";
+import { ErrorBoundary } from "./lessons";
+
+// just for fun try to use named exports ...
+const PokemonDetailLazy = lazy(async () => {
+  try {
+    // if just set await Promise.reject() TS rightfuly sign that as never
+    const { PokemonDetail } = await (Math.random() > 0.2
+      ? Promise.reject()
+      : import("./lessons"));
+    return { default: PokemonDetail };
+  } catch (error) {
+    console.error(error);
+    throw new Error("Couldn't load Pokemon detail");
+  }
+});
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>Hello Vite + React!</p>
-        <p>
-          <button type="button" onClick={() => setCount((count) => count + 1)}>
-            count is: {count}
-          </button>
-        </p>
-        <p>
-          Edit <code>App.tsx</code> and save to test HMR updates.
-        </p>
-        <p>
-          <a
-            className="App-link"
-            href="https://reactjs.org"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Learn React
-          </a>
-          {' | '}
-          <a
-            className="App-link"
-            href="https://vitejs.dev/guide/features.html"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Vite Docs
-          </a>
-        </p>
-      </header>
+    <div>
+      <h1>Pokedex</h1>
+      <ErrorBoundary fallback="Couldn't catch 'em all.">
+        <Suspense fallback={<p>loading pokemon detail....</p>}>
+          <PokemonDetailLazy />
+        </Suspense>
+      </ErrorBoundary>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
