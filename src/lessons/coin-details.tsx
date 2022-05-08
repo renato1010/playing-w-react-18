@@ -1,4 +1,6 @@
-// that would be lazy loaded
+import { useState, useTransition } from "react";
+import { fetchCoin, suspensify } from "../api";
+
 type Coin = {
   id: string;
   symbol: string;
@@ -17,7 +19,6 @@ type Coin = {
   tsupply: string;
   msupply: string;
 };
-type Status = "pending" | "error" | "success";
 
 const testCoin: Coin = {
   id: "90",
@@ -38,41 +39,13 @@ const testCoin: Coin = {
   msupply: "21000000",
 };
 
-function suspensify(promise: Promise<any>) {
-  let status: Status = "pending";
-  let result: Coin;
-  let suspender = promise.then(
-    (response) => {
-      status = "success";
-      result = response[0];
-    },
-    (error) => {
-      status = "error";
-      result = error;
-    }
-  );
-  return {
-    read() {
-      // pending
-      if (status === "pending") {
-        throw suspender;
-      }
-      // rejected
-      if (status === "error") {
-        throw result;
-      }
-      // resolved
-      if (status === "success") {
-        return result;
-      }
-    },
-  };
-}
+let initialCoin = suspensify(fetchCoin(80));
 
-let coin = suspensify(
-  fetch("https://api.coinlore.net/api/ticker/?id=90").then((res) => res.json())
-);
 function CoinDetail() {
-  return <div>{coin.read()?.name}</div>;
+  const [coinResource] = useState<{
+    read(): Coin | undefined;
+  }>(initialCoin);
+  const coin = coinResource.read();
+  return <div>{coin?.name}</div>;
 }
-export { CoinDetail };
+export { CoinDetail, type Coin };
